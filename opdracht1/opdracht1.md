@@ -36,7 +36,7 @@ Thank you for your valuable feedback: very cool
 
 6. Waar zit in deze code een anonieme functie
 
-Het volgende stuk code is een anonieme functie:``(answer) => {
+Het volgende stuk code is een anonieme functie: ``(answer) => {
   console.log(`Thank you for your valuable feedback: ${answer}`)`` 
 
 7. Herschrijf de code naar een niet anonieme callback functie
@@ -510,7 +510,8 @@ client.on('connect', () => {
 
 20. Werk nu samen met een medestudent. Laat jouw lampen aansturen door een bewegingssensor die op de PC van je medestudent draait.
 
-- Kan ik nog niet laten zien
+![alt text](image-7.png)
+![alt text](image-8.png)
 
 21. In een gang staan nu aan beide kanten een bewegingssensor plaatsen die een lamp aanstuurt. Zodra iemand de gang inloopt (maakt niet uit welke kant) gaat de lamp aan (en na x seconde weer uit). Welke variant van opgave 16 werkt nu altijd goed
 
