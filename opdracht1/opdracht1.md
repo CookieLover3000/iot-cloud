@@ -14,21 +14,24 @@
 
 4. Voeg nu een timer toe die het interval weer cancelt na 20 seconde? Wanneer stopt nu het script?
 
-- Het programma stopt na 20 minuten
+- Het programma stopt na 20 seconden
 
 5. Het inlezen van keyboard input kan met de volgende code: https://nodejs.org/docs/latest/api/readline.html. Test deze code
+
 ```javascript
-const readline = require('readline');
+const readline = require('node:readline');
+const { stdin: input, stdout: output } = require('node:process');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+const rl = readline.createInterface({ input, output });
 
-rl.on('line', (input) => {
-  console.log(`Received: ${input}`);
+rl.question('What do you think of Node.js? ', (answer) => {
+  // TODO: Log the answer in a database
+  console.log(`Thank you for your valuable feedback: ${answer}`);
+
+  rl.close();
 });
 ```
+
 ```
 What do you think of Node.js?
 Thank you for your valuable feedback: very cool
@@ -37,7 +40,10 @@ Thank you for your valuable feedback: very cool
 6. Waar zit in deze code een anonieme functie
 
 Het volgende stuk code is een anonieme functie: ``(answer) => {
-  console.log(`Thank you for your valuable feedback: ${answer}`)`` 
+  console.log(`Thank you for your valuable feedback: ${answer}`);
+
+  rl.close();
+});`` 
 
 7. Herschrijf de code naar een niet anonieme callback functie
 
@@ -101,95 +107,56 @@ Received input: antwoord 2
 
 
 10. Gebruik de event emitter om meerdere keren invoer van het toetsenbord te lezen. (Event: ‘line’)
+
 ```javascript
-const readline = require('readline');
+const readline = require('node:readline');
+const { stdin: input, stdout: output } = require('node:process');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+const rl = readline.createInterface({ input, output });
 
-// very scalable, can even ask more than two questions :)
-const questions = ["give answer 1: ", "give answer 2: "];
-
-let index = 0;
-
-// ask question and read in input
-function askQuestion() {
-  if (index >= questions.length) {
-    index = 0;
-  }
-
-  rl.question(questions[index], handleInput);
-  index++;
+function handleInput(answer) {
+  console.log(`Thank you for your valuable feedback: ${answer}`);
 }
 
-function handleInput(input) {
-  console.log(`Received input: ${input}`);
-  askQuestion();
-}
-
-// start code
-askQuestion();
+rl.on('line', handleInput); 
 ```
 ```
-give answer 1: a
-Received input: a
-give answer 2: a
-Received input: a
-give answer 1: aa
-Received input: aa
-give answer 2: a
-Received input: a
-give answer 1: a
-Received input: a
-give answer 2: aa
-Received input: aa
-give answer 1: aa
-Received input: aa
-give answer 2: aaa
-Received input: aaa
+a
+Thank you for your valuable feedback: a
+a
+Thank you for your valuable feedback: a
+a
+Thank you for your valuable feedback: a
+a
+Thank you for your valuable feedback: a
+a
+Thank you for your valuable feedback: a
+a
+Thank you for your valuable feedback: a
+a
+Thank you for your valuable feedback: a
+a
+Thank you for your valuable feedback: a
 ```
 
 11. Laat het programma stoppen als er quit wordt ingetypt
 ```javascript
-const readline = require('readline');
+const readline = require('node:readline');
+const { stdin: input, stdout: output } = require('node:process');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+const rl = readline.createInterface({ input, output });
 
-// very scalable, can even ask more than two questions :)
-const questions = ["give answer 1: ", "give answer 2: "];
-
-let index = 0;
-
-// ask question and read in input
-function askQuestion() {
-  if (index >= questions.length) {
-    index = 0;
+function handleInput(answer) {
+  if (answer == "quit") {
+    rl.close();
   }
 
-  rl.question(questions[index], handleInput);
-  index++;
+  console.log(`Thank you for your valuable feedback: ${answer}`);
 }
 
-function handleInput(input) {
-  if (input == 'quit') {
-    process.exit(0);
-  }
-  console.log(`Received input: ${input}`);
-  askQuestion();
-}
-
-// start code
-askQuestion();
+rl.on('line', handleInput); 
 ```
-```
-give answer 1: quit
-PS C:\Users\iwanv\Documents\School\iot-cloud\opdracht1> 
-```
+![alt text](image-9.png)
 
 12. Maak een simpel programma dat een mqtt bericht published mbv het mqtt package. Test of het bericht is aangekomen via de webpagina van hivemq. 
 ```javascript
