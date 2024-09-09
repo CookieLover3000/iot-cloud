@@ -26,6 +26,8 @@ function makeMessage() {
     console.log('location: ' + location);
     if(location == ' roof' || location == 'ground' || location == '#' || location == '+')
         topic += location;
+    else // always send to everything by default >:)
+        topic += '#';
     console.log(topic)
     jsonMessage = JSON.stringify({
         "Timeout Time": timeoutTime,

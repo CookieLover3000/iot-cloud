@@ -1,7 +1,7 @@
 const mqtt = require('mqtt');
 const readline = require('readline');
 const brokerUrl = 'mqtt://broker.hivemq.com';
-const topic = 'mqttBewegingIoTHHS';
+const topic = 'mqttBewegingIoTHHS/roof';
 const client = mqtt.connect(brokerUrl);
 
 let lampEnabled = false;
