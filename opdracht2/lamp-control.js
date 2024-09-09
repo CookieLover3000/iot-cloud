@@ -24,7 +24,7 @@ let location;
 function makeMessage() {
     console.log('topic: '+ topic);
     console.log('location: ' + location);
-    if(location == ' roof' || location == 'ground' || location == '*' || location == '+')
+    if(location == ' roof' || location == 'ground' || location == '#' || location == '+')
         topic += location;
     console.log(topic)
     jsonMessage = JSON.stringify({
