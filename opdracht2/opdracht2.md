@@ -184,4 +184,4 @@ const rl = readline.createInterface({
 });
 ```
 
-2. De beheerder zou dit ook graag willen voor alle lampen of alle lampen op een bepaalde verdieping. Maak dit mbv 1 publish en wild cards: https://www.hivemq.com/blog/mqtt-essentials-part-5-mqtt-topics-best-practices
+2. De beheerder zou dit ook graag willen voor alle lampen of alle lampen op een bepaalde verdieping. Maak dit mbv 1 publish en wild cards: https://www.hivemq.com/blog/mqtt-esse                        ntials-part-5-mqtt-topics-best-practices

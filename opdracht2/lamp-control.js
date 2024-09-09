@@ -2,10 +2,12 @@ const mqtt = require('mqtt');
 const readline = require('readline');
 const conMessage = 'Connection established'
 const brokerUrl = 'mqtt://broker.hivemq.com';
-const topic = 'mqttBewegingIoTHHS';
+let topic = 'mqttBewegingIoTHHS/';
 const client = mqtt.connect(brokerUrl);
 
-const questions = ["Enter timeout time in ms: ", "Enter lamp strength in percentage: "];
+const questions = ["Enter what floor you want to control: ",
+     "Enter timeout time in ms: ",
+      "Enter lamp strength in percentage: "];
 
 // Set up readline to listen for key presses
 const rl = readline.createInterface({
@@ -17,8 +19,14 @@ let index = 0;
 let jsonMessage;
 let timeoutTime;
 let lightStrength;
+let location;
 
-function makeJson() {
+function makeMessage() {
+    console.log('topic: '+ topic);
+    console.log('location: ' + location);
+    if(location == ' roof' || location == 'ground' || location == '*' || location == '+')
+        topic += location;
+    console.log(topic)
     jsonMessage = JSON.stringify({
         "Timeout Time": timeoutTime,
         "Light Strength": lightStrength
@@ -31,7 +39,7 @@ function makeJson() {
 function askQuestion() {
     if (index >= questions.length) {
         // publish message
-        makeJson();
+        makeMessage();
         client.publish(topic, jsonMessage, (error) => {
             if (error) {
                 console.error('Failed to publish message:', error);
@@ -51,16 +59,20 @@ function handleInput(answer) {
     if (answer == "quit") {
         process.exit(0);
     }
-    if (index == 1) {
+    if(index == 1) {
+        location = answer;
+    }
+    if (index == 2) {
         timeoutTime = answer;
     }
-    else if (index == 2) {
+    else if (index == 3) {
         lightStrength = answer;
     }
     askQuestion();
 }
 
 console.log("Welcome to lamp control software. Enter 'quit' to exit the software.");
+console.log("availabe floors: ground, roof");
 console.log("Answer -1 to any question to have the lamp not change it's behaviour.");
 
 client.on('connect', () => {
