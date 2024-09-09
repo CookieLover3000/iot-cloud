@@ -1,7 +1,8 @@
 const mqtt = require('mqtt');
 const readline = require('readline');
 const brokerUrl = 'mqtt://broker.hivemq.com';
-const topic = 'mqttBewegingIoTHHS/roof';
+const topic = 'mqttBewegingIoTHHS/roof/lamp';
+const topic2 = 'mqttBewegingIoTHHS/all/lamp';
 const client = mqtt.connect(brokerUrl);
 
 let lampEnabled = false;
@@ -13,6 +14,13 @@ client.on('connect', () => {
     console.log('Connected to MQTT broker');
 
     client.subscribe(topic, (error) => {
+        if (error) {
+            console.error('Failed to subscribe to topic:', error);
+        } else {
+            console.log('Subscribed succesfully');
+        }
+    });
+    client.subscribe(topic2, (error) => {
         if (error) {
             console.error('Failed to subscribe to topic:', error);
         } else {

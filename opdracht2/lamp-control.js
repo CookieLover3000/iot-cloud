@@ -2,7 +2,8 @@ const mqtt = require('mqtt');
 const readline = require('readline');
 const conMessage = 'Connection established'
 const brokerUrl = 'mqtt://broker.hivemq.com';
-let topic = 'mqttBewegingIoTHHS/';
+const topic = 'mqttBewegingIoTHHS/';
+const object = '/lamp';
 const client = mqtt.connect(brokerUrl);
 
 const questions = ["Enter what floor you want to control: ",
@@ -20,15 +21,13 @@ let jsonMessage;
 let timeoutTime;
 let lightStrength;
 let location;
+let targetTopic;
 
 function makeMessage() {
-    console.log('topic: '+ topic);
-    console.log('location: ' + location);
-    if(location == ' roof' || location == 'ground' || location == '#' || location == '+')
-        topic += location;
+    if(location == 'roof' || location == 'ground' || location == 'all')
+        targetTopic = topic + location + object;
     else // always send to everything by default >:)
-        topic += '#';
-    console.log(topic)
+        targetTopic = topic + 'all' + object;
     jsonMessage = JSON.stringify({
         "Timeout Time": timeoutTime,
         "Light Strength": lightStrength
@@ -42,7 +41,7 @@ function askQuestion() {
     if (index >= questions.length) {
         // publish message
         makeMessage();
-        client.publish(topic, jsonMessage, (error) => {
+        client.publish(targetTopic, jsonMessage, (error) => {
             if (error) {
                 console.error('Failed to publish message:', error);
             } else {
@@ -74,7 +73,7 @@ function handleInput(answer) {
 }
 
 console.log("Welcome to lamp control software. Enter 'quit' to exit the software.");
-console.log("availabe floors: ground, roof");
+console.log("availabe floors: ground, roof, all");
 console.log("Answer -1 to any question to have the lamp not change it's behaviour.");
 
 client.on('connect', () => {
