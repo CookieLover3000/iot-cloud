@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "azure-iot-device": "^1.18.3",
+    "azure-iot-device-mqtt": "^1.16.3",
+    "azure-iothub": "^1.16.5",
     "chalk": "^4.1.2",
     "dotenv": "^16.4.5",
     "json": "^11.0.0",
