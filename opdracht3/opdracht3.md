@@ -180,11 +180,22 @@ function printResultFor(op) {
 
 7. Als je kijkt in de reference bij de Message class dan zie je dat je ook kan aangeven dat er JSON wordt verstuurd. Pas de code van de 1e sensor aan en test het effect.
 
-# Het standaard voorbeeld stuurd al een JSON bericht. Ik begrijp niet helemaal wat ik daar aan zou moeten passen. In het practicum vragen
+```js
+function generateMessage() {
+    const windSpeed = 10 + (Math.random() * 4); // range: [10, 14]
+    const temperature = 20 + (Math.random() * 10); // range: [20, 30]
+    const humidity = 60 + (Math.random() * 20); // range: [60, 80]
+    const time = new Date().toLocaleTimeString();    const data = JSON.stringify({ deviceId: 'myFirstDevice', windSpeed: windSpeed, temperature: temperature, humidity: humidity, time : time });
+    const message = new Message(data);
+    message.contentType='application/json';
+    message.properties.add('temperatureAlert', (temperature > 28) ? 'true' : 'false');
+    return message;
+}
+```
 
 8. Kopieer devices_methods.js. Dit is een simulated Iot Deur device
 
-    done
+        
 
 9. Welke 2 direct methodes biedt dit script aan?
 
@@ -322,7 +333,7 @@ function handleInput(answer) {
     if (index == 2) {
         if (answer1 == 'lockDoor') {
             if (answer == 'open' || answer == 'close') {
-                answer2 = JSON.stringify( {status : answer} );
+                answer2 = JSON.stringify( {'status' : answer} );
             }
             else {
                 console.log("enter either open or close");
@@ -344,7 +355,10 @@ function onLockDoor(request, response) {
 
     var responseMessage = "";
 
-    if (request.payload.includes('open')) {
+    var parsedMessage = JSON.parse(request.payload);
+
+    // if (request.payload.includes('open')) {
+    if(parsedMessage.status == 'open') {
         if (open) {
             responseMessage = "door is already open";
         }
@@ -353,7 +367,7 @@ function onLockDoor(request, response) {
             open = true;
         }
     }
-    else if (request.payload.includes('close')) {
+    else if(parsedMessage.status == 'close') {
         if (!open) {
             responseMessage = "door is already closed";
         }
@@ -382,3 +396,4 @@ function onLockDoor(request, response) {
 ![alt text](image.png)
 
 13. Maak een simulated alarmlicht dat je kan aanzetten met een bepaalde knipperfrequentie (in msec) en kleur (RGB waarde) die verbonden is met de Azure Iot Hub. Functioneel doet deze hetzelfde als het alarmlicht uit practicum 2. Ook mag in dit simulated device geen dode code zitten
+

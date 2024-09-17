@@ -37,9 +37,9 @@ function generateMessage() {
     const windSpeed = 10 + (Math.random() * 4); // range: [10, 14]
     const temperature = 20 + (Math.random() * 10); // range: [20, 30]
     const humidity = 60 + (Math.random() * 20); // range: [60, 80]
-    const time = new Date().toLocaleTimeString();
-    const data = JSON.stringify({ deviceId: 'myFirstDevice', windSpeed: windSpeed, temperature: temperature, humidity: humidity, time : time });
+    const time = new Date().toLocaleTimeString();    const data = JSON.stringify({ deviceId: 'myFirstDevice', windSpeed: windSpeed, temperature: temperature, humidity: humidity, time : time });
     const message = new Message(data);
+    message.contentType='application/json';
     message.properties.add('temperatureAlert', (temperature > 28) ? 'true' : 'false');
     return message;
 }

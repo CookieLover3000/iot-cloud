@@ -73,7 +73,7 @@ function handleInput(answer) {
     if (index == 2) {
         if (answer1 == 'lockDoor') {
             if (answer == 'open' || answer == 'close') {
-                answer2 = JSON.stringify( {status : answer} );
+                answer2 = JSON.stringify( {'status' : answer} );
             }
             else {
                 console.log("enter either open or close");

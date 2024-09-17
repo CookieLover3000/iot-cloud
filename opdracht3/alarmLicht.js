@@ -1,18 +1,36 @@
+require('dotenv').config({ path: './simple_env.env' });
+
+const Protocol = require('azure-iot-device-mqtt').Mqtt;
+const Client = require('azure-iot-device').Client;
+let client = null;
+
+function main() {
+    // open a connection to the device
+    const deviceConnectionString = process.env.IOTHUB_DEVICE_CONNECTION_STRING;
+    client = Client.fromConnectionString(deviceConnectionString, Protocol);
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
+    client.open(onConnect);
+}
+
+function onConnect(err) {
+    if (err) {
+        console.error('Could not connect: ' + err.message);
+    } else {
+        console.log('Connected to device. Registering handlers for methods.');
+
+        // register handlers for all the method names we are interested in
+        client.onDeviceMethod('toggle', onToggle);
+    }
+}
+
 const chalk = require('chalk');
-const mqtt = require('mqtt');
 const { stdin: input, stdout: output } = require('node:process');
-const topic = 'mqttBewegingIoTHHS/knipperlamp';
-const brokerUrl = 'mqtt://broker.hivemq.com';
-const client = mqtt.connect(brokerUrl);
 
-let intervalId;
-
-let blinkDelay = 1000;
-let rgbValue = [0, 255, 0]
-
-process.stdout.write('aan');
-toggle = false;
-// intervalId = setInterval(print, blinkDelay);
+function onToggle() {
+    process.stdout.write("aan");
+    toggle = false;
+    setInterval(print, 1000);
+}
 
 function print() {
     process.stdout.cursorTo(0);
@@ -20,65 +38,10 @@ function print() {
         process.stdout.write("   ");
     }
     else {
-        process.stdout.write(chalk.rgb(rgbValue[0], rgbValue[1], rgbValue[2])("aan"));
+        process.stdout.write(chalk.rgb(0, 255, 0)("aan"));
     }
     toggle = (!toggle);
 }
 
+main();
 
-client.on('connect', () => {
-    console.log('Connected to MQTT broker');
-
-    client.subscribe(topic, (error) => {
-        if (error) {
-            console.error('Failed to subscribe to topic:', error);
-        } else {
-            console.log('Subscribed succesfully');
-        }
-    });
-});
-
-client.on('message', (mtopic, message) => {
-
-    clearInterval(intervalId);
-    intervalId = null;
-
-    const jsonMessage = JSON.parse(message.toString());
-    console.log(`Received message on topic ${topic}:`, jsonMessage);
-
-    if ('enable' in jsonMessage) {
-        const enable = jsonMessage['enable'];
-        console.log(`Enable: ${enable}`);
-
-        if (!enable)
-            return;
-    }
-    else {
-        console.log("error: enabled not found.");
-        return;
-    }
-
-    if ('blinkDelayMs' in jsonMessage) {
-        blinkDelay = jsonMessage['blinkDelayMs'];
-        console.log(`Blink Delay (ms): ${blinkDelay}`);
-    }
-    else {
-        console.log("error: blinkDelayMs not found.")
-        return;
-    }
-
-    if ('rgbValue' in jsonMessage) {
-        const rgb = jsonMessage['rgbValue'];
-        console.log(`RGB Value ${rgb}`);
-        rgbValue[0] = rgb['red'];
-        rgbValue[1] = rgb['green'];
-        rgbValue[2] = rgb['blue'];
-        console.log(`RGB Value - Red: ${rgbValue[0]}, Green: ${rgbValue[1]}, Blue: ${rgbValue[2]}`);
-    }
-    else {
-        console.log("error: rgbValue not found.")
-        return;
-    }
-
-    intervalId = setInterval(print, blinkDelay);
-});

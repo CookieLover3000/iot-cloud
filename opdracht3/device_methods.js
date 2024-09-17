@@ -64,7 +64,10 @@ function onLockDoor(request, response) {
 
     var responseMessage = "";
 
-    if (request.payload.includes('open')) {
+    var parsedMessage = JSON.parse(request.payload);
+
+    // if (request.payload.includes('open')) {
+    if(parsedMessage.status == 'open') {
         if (open) {
             responseMessage = "door is already open";
         }
@@ -73,7 +76,7 @@ function onLockDoor(request, response) {
             open = true;
         }
     }
-    else if (request.payload.includes('close')) {
+    else if(parsedMessage.status == 'close') {
         if (!open) {
             responseMessage = "door is already closed";
         }
