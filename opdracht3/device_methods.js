@@ -61,28 +61,26 @@ function onGetDeviceLog(request, response) {
 
 function onLockDoor(request, response) {
     printDeviceMethodRequest(request);
-
     var responseMessage = "";
 
-    var parsedMessage = JSON.parse(request.payload);
-
-    // if (request.payload.includes('open')) {
-    if(parsedMessage.status == 'open') {
-        if (open) {
-            responseMessage = "door is already open";
+    if (request["payload"].hasOwnProperty("status")) {
+        if (request.payload.status == 'open') {
+            if (open) {
+                responseMessage = "door is already open";
+            }
+            else {
+                responseMessage = "opening door";
+                open = true;
+            }
         }
-        else {
-            responseMessage = "opening door";
-            open = true;
-        }
-    }
-    else if(parsedMessage.status == 'close') {
-        if (!open) {
-            responseMessage = "door is already closed";
-        }
-        else {
-            responseMessage = "closing door";
-            open = false;
+        else if (request.payload.status == 'close') {
+            if (!open) {
+                responseMessage = "door is already closed";
+            }
+            else {
+                responseMessage = "closing door";
+                open = false;
+            }
         }
     }
 

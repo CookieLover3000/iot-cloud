@@ -34,10 +34,12 @@ function askQuestion() {
     if (index >= questions.length) {
         // create methodParams
         methodParams = {
-            methodName: answer1,
-            payload: answer2,
+            methodName: "toggle",
+            payload: JSON.stringify({ "enable": true, "blinkDelayMs": 500, "rgbValue": { "red": 255, "green": 0, "blue": 0}}),
             responseTimeoutInSeconds: 15 // set response timeout as 15 seconds
         };
+
+        console.log(answer2);
 
         client.invokeDeviceMethod(targetDevice, methodParams, function (err, result) {
             if (err) {
@@ -67,13 +69,13 @@ function handleInput(answer) {
         process.exit(0);
     }
     if (index == 1) {
-        if (answer == 'getDeviceLog' || answer == 'lockDoor')
+        if (answer == 'getDeviceLog' || answer == 'lockDoor' || answer == 'toggle')
             answer1 = answer;
     }
     if (index == 2) {
         if (answer1 == 'lockDoor') {
             if (answer == 'open' || answer == 'close') {
-                answer2 = JSON.stringify( {'status' : answer} );
+                answer2 = JSON.stringify({ 'status': answer });
             }
             else {
                 console.log("enter either open or close");

@@ -1,8 +1,15 @@
+'use strict';
 require('dotenv').config({ path: './simple_env.env' });
 
 const Protocol = require('azure-iot-device-mqtt').Mqtt;
 const Client = require('azure-iot-device').Client;
 let client = null;
+let intervalId;
+const chalk = require('chalk');
+
+let blinkDelay = 1000;
+let rgbValue = [0, 255, 0]
+var toggle = false;
 
 function main() {
     // open a connection to the device
@@ -19,25 +26,41 @@ function onConnect(err) {
         console.log('Connected to device. Registering handlers for methods.');
 
         // register handlers for all the method names we are interested in
-        client.onDeviceMethod('toggle', onToggle);
+        client.onDeviceMethod('toggleEffect', onToggleEffect);
     }
 }
 
-const chalk = require('chalk');
-const { stdin: input, stdout: output } = require('node:process');
+function print() {
+    process.stdout.cursorTo(0);
+    if (toggle) {
+        process.stdout.write("   ");
+    }
+    else {
+        process.stdout.write(chalk.rgb(rgbValue[0], rgbValue[1], rgbValue[2])("aan"));
+    }
+    toggle = (!toggle);
+}
 
-function onToggle(request, response) {
+function printDeviceMethodRequest(request) {
+    // print method name
+    console.log('Received method call for method \'' + request.methodName + '\'');
 
-    var parsedMessage = JSON.parse(request.payload);
-    console.log("parsed message: " + parsedMessage);
+    // if there's a payload just do a default console log on it
+    if (request.payload) {
+        console.log('Payload:\n' + request.payload);
+    }
+}
 
+
+function onToggleEffect(request, response) {
+    printDeviceMethodRequest(request);
+
+    var responseMessage = "";
     clearInterval(intervalId);
     intervalId = null;
 
-    console.log(`Received message on topic ${topic}:`, parsedMessage);
-
-    if ('enable' in parsedMessage) {
-        const enable = parsedMessage['enable'];
+    if (request.payload.enable) {
+        const enable = request.payload.enable;
         console.log(`Enable: ${enable}`);
 
         if (!enable)
@@ -48,8 +71,8 @@ function onToggle(request, response) {
         return;
     }
 
-    if ('blinkDelayMs' in parsedMessage) {
-        blinkDelay = parsedMessage['blinkDelayMs'];
+    if (request.payload.blinkDelayMs) {
+        blinkDelay = request.payload.blinkDelayMs;
         console.log(`Blink Delay (ms): ${blinkDelay}`);
     }
     else {
@@ -57,8 +80,8 @@ function onToggle(request, response) {
         return;
     }
 
-    if ('rgbValue' in parsedMessage) {
-        const rgb = parsedMessage['rgbValue'];
+    if (request.payload.rgbValue) {
+        const rgb = request.payload.rgbValue;
         console.log(`RGB Value ${rgb}`);
         rgbValue[0] = rgb['red'];
         rgbValue[1] = rgb['green'];
@@ -72,22 +95,22 @@ function onToggle(request, response) {
 
     intervalId = setInterval(print, blinkDelay);
 
+    // complete the response
+    response.send(200, responseMessage, function (err) {
+        if (err) {
+            console.error('An error ocurred when sending a method response:\n' +
+                err.toString());
+        } else {
+            console.log(responseMessage);
+        }
+    });
+
 }
 
-function print() {
-    process.stdout.cursorTo(0);
-    if (toggle) {
-        process.stdout.write("   ");
-    }
-    else {
-        process.stdout.write(chalk.rgb(0, 255, 0)("aan"));
-    }
-    toggle = (!toggle);
-}
+// program
 
 main();
 
 process.stdout.write("aan");
 toggle = false;
-setInterval(print, 1000);
-
+intervalId = setInterval(print, 1000);
