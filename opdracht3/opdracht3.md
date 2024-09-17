@@ -529,6 +529,113 @@ intervalId = setInterval(print, 1000);
 
 15. Laat jouw de Iot deur ook testen door een medestudent. Hij moet nu dus verbinding kunnen maken met jouw Iot Hub door het runnen van de service die eerder gemaakt hebt. Bedenk welke gegevens je nog meer moet delen.
 
+![alt text](image-7.png)
+![alt text](image-8.png)
+
+16. Open in de Azure console de twin properties. Welke info kan je hierin zien?
+
+    informatie over het device, zoals het id, metadata zoals wanneer het voor het laatst is gepdate of het device aan staat. Ook laat het connectie statys zien en wanneer het voor het laatst actief was. Hieronder de twin properties van first_device.
+
+```JSON
+    {
+    "etag": "AAAAAAAAAAE=",
+    "deviceId": "first_device",
+    "deviceEtag": "MjE2Mjc5MzU=",
+    "version": 2,
+    "properties": {
+        "desired": {
+            "$metadata": {
+                "$lastUpdated": "2024-09-16T13:13:13.2672548Z"
+            },
+            "$version": 1
+        },
+        "reported": {
+            "$metadata": {
+                "$lastUpdated": "2024-09-16T13:13:13.2672548Z"
+            },
+            "$version": 1
+        }
+    },
+    "capabilities": {
+        "iotEdge": false
+    },
+    "modelId": "",
+    "status": "enabled",
+    "statusUpdateTime": "0001-01-01T00:00:00.0000000Z",
+    "lastActivityTime": "2024-09-16T15:19:40.6565584Z",
+    "connectionState": "Connected",
+    "cloudToDeviceMessageCount": 0,
+    "authenticationType": "sas",
+    "x509Thumbprint": {}
+}
+```
+
+17. Demonstreer de reported of desired sectie van de twin door een Iot device te maken die deze gebruikt. Bedenk hiervoor een zinvolle twin property in een eerder door jou gemaakt Iot Device.
+
+![alt text](image-9.png)
+
+```json
+{
+    "etag": "AAAAAAAAAAE=",
+    "deviceId": "first_device",
+    "deviceEtag": "MjE2Mjc5MzU=",
+    "version": 8,
+    "properties": {
+        "desired": {
+            "$metadata": {
+                "$lastUpdated": "2024-09-16T13:13:13.2672548Z"
+            },
+            "$version": 1
+        },
+        "reported": {
+            "$metadata": {
+                "$lastUpdated": "2024-09-17T15:01:57.4918101Z",
+                "temperature": {
+                    "$lastUpdated": "2024-09-17T15:01:57.4918101Z"
+                }
+            },
+            "$version": 7,
+            "temperature": 26.023898937638855
+        }
+    },
+    "capabilities": {
+        "iotEdge": false
+    },
+    "modelId": "",
+    "status": "enabled",
+    "statusUpdateTime": "0001-01-01T00:00:00.0000000Z",
+    "lastActivityTime": "2024-09-17T15:01:14.3841694Z",
+    "connectionState": "Disconnected",
+    "cloudToDeviceMessageCount": 0,
+    "authenticationType": "sas",
+    "x509Thumbprint": {}
+}
+```
+
+code:
+
+```js
+function generateTwinProperty(temperature) {
+    client.getTwin(function (err, twin) {
+
+        const twinProperty = { "temperature": temperature };
+        twin.properties.reported.update(twinProperty, function (err) {
+            if (err) throw err;
+            console.log('updated twin state ' + JSON.stringify(twinProperty));
+        });
+    });
+}
 
 
-16. 
+function generateMessage() {
+    const windSpeed = 10 + (Math.random() * 4); // range: [10, 14]
+    const temperature = 20 + (Math.random() * 10); // range: [20, 30]
+    const humidity = 60 + (Math.random() * 20); // range: [60, 80]
+    const time = new Date().toLocaleTimeString(); const data = JSON.stringify({ deviceId: 'myFirstDevice', windSpeed: windSpeed, temperature: temperature, humidity: humidity, time: time });
+    generateTwinProperty(temperature);
+    const message = new Message(data);
+    message.contentType = 'application/json';
+    message.properties.add('temperatureAlert', (temperature > 28) ? 'true' : 'false');
+    return message;
+}
+```

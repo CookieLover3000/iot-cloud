@@ -3,7 +3,7 @@
 
 'use strict';
 
-require('dotenv').config({path: './simple_env.env'});
+require('dotenv').config({ path: './simple_env.env' });
 
 // Choose a protocol by uncommenting one of these transports.
 const Protocol = require('azure-iot-device-mqtt').Mqtt;
@@ -33,13 +33,26 @@ function messageHandler(msg) {
     client.complete(msg, printResultFor('completed'));
 }
 
+function generateTwinProperty(temperature) {
+    client.getTwin(function (err, twin) {
+
+        const twinProperty = { "temperature": temperature };
+        twin.properties.reported.update(twinProperty, function (err) {
+            if (err) throw err;
+            console.log('updated twin state ' + JSON.stringify(twinProperty));
+        });
+    });
+}
+
+
 function generateMessage() {
     const windSpeed = 10 + (Math.random() * 4); // range: [10, 14]
     const temperature = 20 + (Math.random() * 10); // range: [20, 30]
     const humidity = 60 + (Math.random() * 20); // range: [60, 80]
-    const time = new Date().toLocaleTimeString();    const data = JSON.stringify({ deviceId: 'myFirstDevice', windSpeed: windSpeed, temperature: temperature, humidity: humidity, time : time });
+    const time = new Date().toLocaleTimeString(); const data = JSON.stringify({ deviceId: 'myFirstDevice', windSpeed: windSpeed, temperature: temperature, humidity: humidity, time: time });
+    generateTwinProperty(temperature);
     const message = new Message(data);
-    message.contentType='application/json';
+    message.contentType = 'application/json';
     message.properties.add('temperatureAlert', (temperature > 28) ? 'true' : 'false');
     return message;
 }
