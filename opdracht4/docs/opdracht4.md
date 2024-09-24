@@ -157,27 +157,157 @@ app.http('giveList', {
 
 ```js
 app.http('addPeople', {
-    methods: ['GET'],
+    methods: ['POST'],
     authLevel: 'anonymous',
     route: 'personen',
     handler: async (request, context) => {
+        context.log(`hoi :)`)
         context.log(`Http function processed request for url "${request.url}"`);
 
-        let person = request.query.get('name');
+        let person = await request.json();
+        context.log(`Person: ${person.name}`); 
+        if(person === null) 
+            return { status : 400 }
+        
+        let personName = person;
+        list.people.push(personName);
+
+        context.log(`Person name: ${personName}`);        
+    }
+});
+```
+
+![alt text](image-22.png)
+
+![alt text](image-24.png)
+
+5. Idem voor wijzigen van een bestaand persoon
+
+```js
+app.http('modifyPeople', {
+    methods: ['PUT'],
+    authLevel: 'function',
+    route: 'personen/{id}',
+    handler: async (request, context) => {
+        context.log(`Http function processed request for url "${request.url}"`);
+
+        const id = parseInt(request.params.id, 10) -1;
+        let person = await request.json();
+        context.log(`Person: ${person.name}`); 
+
+        if(id === null) {
+            return { body: `Hello, ${JSON.stringify(list)}!` };
+        }
+        else if(id >= list.people.length || id < 0) {
+            return {
+                body: "404 | Person does not exist.",
+                status: 404
+            }
+        }
 
         if(person === null) 
             return { status : 400 }
         
-        let personName = {"name" : person}
-        list.people.push(personName);
+        let personName = person;
+        list.people[id] = personName;
         console.log(`Person name: ${JSON.stringify(personName)}`);        
     }
 });
 ```
 
-![alt text](image-5.png)
+![alt text](image-25.png)
 
-![alt text](image-4.png)
+![alt text](image-26.png)
 
-5. Idem voor wijzigen van een bestaand persoon
+6. Idem voor het verwijderen van een persoon
+
+```js
+app.http('deletePeople', {
+    methods: ['DELETE'],
+    authLevel: 'anonymous',
+    route: 'personen/{id}',
+    handler: async (request, context) => {
+        context.log(`Http function processed request for url "${request.url}"`);
+
+        const id = parseInt(request.params.id, 10) -1;
+
+        if(id === null) {
+            return {
+                status: 400         
+            }
+        }
+        else if(id >= list.people.length || id < 0) {
+            return {
+                body: "404 | Person does not exist.",
+                status: 404
+            }
+        }
+        
+        list.people.splice(id,1);   
+    }
+});
+```
+
+![alt text](image-8.png)
+
+![alt text](image-11.png)
+
+![alt text](image-12.png)
+
+7. Deploy  de complete REST api naar Azure en test of deze werkt
+
+![alt text](image-13.png)
+
+![alt text](image-27.png)
+
+![alt text](image-28.png)
+
+![alt text](image-29.png)
+
+![alt text](image-30.png)
+
+![alt text](image-18.png)
+
+![alt text](image-19.png)
+
+8. Hoe kan je voorkomen dat iedereen in de wereld deze REST api kan aanroepen
+
+    Met AuthLevel kan je dat aanpassen. Dan moeten ze zich authenticaten.
+
+9. Pas dit ook toe en test dit. Waar in Postman in het request heb je nu iets toegevoegd?
+
+```js
+app.http('giveList', {
+    methods: ['GET'],
+    authLevel: 'function', // <--- dit is verandert naar function van anonymous af
+    route: 'personen/{id}',
+    handler: async (request, context) => {
+        context.log(`Http function processed request for url "${request.url}"`);
+
+        const id = parseInt(request.params.id, 10) -1;
+
+        const person = list.people[id];
+
+        console.log("id: " + id);
+        if(id === null) {
+            return { body: `Hello, ${JSON.stringify(list)}!` };
+        }
+        else if(id >= list.people.length || id < 0) {
+            return {
+                body: "404 | Person does not exist.",
+                status: 404
+            }
+        }
+        else {
+            return { body: `Hello, ${JSON.stringify(person)}` };
+        }
+    }
+});
+```
+
+authLevel is verandert van `anonymous` naar `function` en de key van de azure function is meegegeven aan het request.
+
+![alt text](image-21.png)
+
+![alt text](image-20.png)
 

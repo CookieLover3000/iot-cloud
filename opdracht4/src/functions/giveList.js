@@ -7,7 +7,7 @@ const list = {
 
 app.http('giveList', {
     methods: ['GET'],
-    authLevel: 'anonymous',
+    authLevel: 'function',
     route: 'personen/{id}',
     handler: async (request, context) => {
         context.log(`Http function processed request for url "${request.url}"`);
@@ -33,37 +33,76 @@ app.http('giveList', {
 });
 
 app.http('addPeople', {
-    methods: ['GET'],
-    authLevel: 'anonymous',
+    methods: ['POST'],
+    authLevel: 'function',
     route: 'personen',
     handler: async (request, context) => {
+        context.log(`hoi :)`)
         context.log(`Http function processed request for url "${request.url}"`);
 
-        let person = request.query.get('name');
-
+        let person = await request.json();
+        context.log(`Person: ${person.name}`); 
         if(person === null) 
             return { status : 400 }
         
-        let personName = {"name" : person}
+        let personName = person;
         list.people.push(personName);
-        console.log(`Person name: ${JSON.stringify(personName)}`);        
+
+        context.log(`Person name: ${personName}`);        
     }
 });
 
 app.http('modifyPeople', {
     methods: ['PUT'],
-    authLevel: 'anonymous',
-    route: 'personen/change/{id}',
+    authLevel: 'function',
+    route: 'personen/{id}',
     handler: async (request, context) => {
         context.log(`Http function processed request for url "${request.url}"`);
 
-        let person = request.query.get('name');
+        const id = parseInt(request.params.id, 10) -1;
+        let person = await request.json();
+        context.log(`Person: ${person.name}`); 
+
+        if(id === null) {
+            return { body: `Hello, ${JSON.stringify(list)}!` };
+        }
+        else if(id >= list.people.length || id < 0) {
+            return {
+                body: "404 | Person does not exist.",
+                status: 404
+            }
+        }
 
         if(person === null) 
             return { status : 400 }
         
-        let personName = {"name" : person}
-        list.people.push(personName);
+        let personName = person;
+        list.people[id] = personName;
         console.log(`Person name: ${JSON.stringify(personName)}`);        
+    }
+});
+
+app.http('deletePeople', {
+    methods: ['DELETE'],
+    authLevel: 'function',
+    route: 'personen/{id}',
+    handler: async (request, context) => {
+        context.log(`Http function processed request for url "${request.url}"`);
+
+        const id = parseInt(request.params.id, 10) -1;
+
+        if(id === null) {
+            return {
+                status: 400         
+            }
+        }
+        else if(id >= list.people.length || id < 0) {
+            return {
+                body: "404 | Person does not exist.",
+                status: 404
+            }
+        }
+        
+        list.people.splice(id,1);   
     }
 });
