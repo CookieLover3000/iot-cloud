@@ -2,20 +2,112 @@ const mqtt = require('mqtt');
 const brokerUrl = 'mqtt://broker.hivemq.com';
 const topic = 'mqttIoTHHS/';
 const { app } = require('@azure/functions');
-const client = mqtt.connect(brokerUrl);
+const mqttClient = mqtt.connect(brokerUrl);
+
+require('dotenv').config({ path: './opdracht5_env.env' });
+
+var Client = require('azure-iothub').Client;
+var connectionString = process.env.IOTHUB_CONNECTION_STRING;
+var targetDevice = null;
+
 
 const ids = {
     0: "all",
     1: "alarmLicht",
     2: "alarmLicht2",
+    3: "azure_first_device",
+    4: "azure_deur"
 }
 
 var globalPayload = null;
 var targetTopic = null;
 
+var methodParams = {
+    methodName: "toggleEffect",
+    payload: null,
+    responseTimeoutInSeconds: 15 // set response timeout as 15 seconds
+};
+
+// app.http('AzurePublish', {
+//     methods: ['GET'], // not completely sure this is the correct method for this, but I guess we are requesting data
+//     authLevel: 'anonymous',
+//     route: 'mqtt/azure',
+//     handler: async (request, context) => {
+//         context.log(`Http function processed request for url "${request.url}"`);
+
+//         if (globalPayload === null)
+//             return { status: 400, body: "400 | payload is empty" }
+
+//         // context.log(`global payload: ${globalPayload}`);
+
+//         methodParams.payload = JSON.parse(globalPayload);
+
+//         // context.log(`method payload: ${methodParams.payload}`);
+//         context.log("type of payload: " + typeof methodParams.payload); // Outputs: object
+
+//         var client = Client.fromConnectionString(connectionString);
+
+//         client.invokeDeviceMethod(targetDevice, methodParams, function (err, result) {
+//             if (err) {
+//                 console.error('Failed to invoke method \'' + methodParams.methodName + '\': ' + err.message);
+//                 return { status: 500, body: "500 | Failure sending message" }
+//             } else {
+//                 console.log(methodParams.methodName + ' on ' + targetDevice + ':');
+//                 console.log(JSON.stringify(result, null, 2));
+//             }
+//         });
+
+//         client.close();
+//         return { status: 200, body: "200 | OK" }
+//     }
+// });
+
+async function azurePublish(context, request) {
+    if (globalPayload === null)
+        return { status: 400, body: "400 | payload is empty" }
+
+    methodParams.payload = JSON.parse(globalPayload);
+
+    // context.log(`method payload: ${methodParams.payload}`);
+    context.log("type of payload: " + typeof methodParams.payload); // Outputs: object
+
+    var client = Client.fromConnectionString(connectionString);
+
+    client.invokeDeviceMethod(targetDevice, methodParams, function (err, result) {
+        if (err) {
+            console.error('Failed to invoke method \'' + methodParams.methodName + '\': ' + err.message);
+            return { status: 500, body: "500 | Failure sending message" }
+        } else {
+            console.log(methodParams.methodName + ' on ' + targetDevice + ':');
+            console.log(JSON.stringify(result, null, 2));
+        }
+    });
+
+    client.close();
+    return { status: 200, body: "200 | OK" }
+}
+
+async function mqttPublish(context, request) {
+    if (globalPayload === null)
+        return { status: 400, body: "400 | payload is empty" }
+
+
+    context.log(`target topic: ${targetTopic}`);
+    context.log(`global payload: ${globalPayload}`);
+
+    try {
+        sendMessage(targetTopic, globalPayload);
+        return { status: 200, body: "200 | OK" }
+    }
+    catch {
+        context.log(`global payload: ${globalPayload}`);
+        return { status: 500, body: "500 | Failure sending message" }
+    }
+}
+
 function sendMessage(topic, payload) {
     // publish message
-    client.publish(topic, payload, (error) => {
+    mqttClient.publish(topic, payload, (error) => {
         if (error) {
             console.error('Failed to publish message:', error);
         } else {
@@ -27,22 +119,21 @@ function sendMessage(topic, payload) {
 app.http('mqttPublish', {
     methods: ['GET'], // not completely sure this is the correct method for this, but I guess we are requesting data
     authLevel: 'anonymous',
-    route: 'mqtt',
+    route: 'mqtt/{id}',
+    
     handler: async (request, context) => {
         context.log(`Http function processed request for url "${request.url}"`);
 
-        if (globalPayload === null)
-            return { status: 400, body: "400 | payload is empty" }
+        const id = parseInt(request.params.id, 10);
 
-        context.log(`global payload: ${globalPayload}`);
-
-        try {
-            sendMessage(targetTopic, globalPayload);
-            return { status: 200, body: "200 | OK" }
+        if (ids[id].includes("azure")) {
+            targetDevice = targetDevice.replace(/^azure_/, '');
+            context.log("azure runt");
+            azurePublish(context, request);
         }
-        catch {
-            context.log(`global payload: ${globalPayload}`);
-            return { status: 500, body: "500 | Failure sending message" }
+        else {
+            context.log("mqtt runt");
+            mqttPublish(context, request);
         }
     }
 });
@@ -50,8 +141,13 @@ app.http('mqttPublish', {
 app.http('createJSON', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    route: 'mqtt',
+    route: 'mqtt/{id}',
     handler: async (request, context) => {
+
+        const id = parseInt(request.params.id, 10);
+
+        context.log(`id: ${ids[id]}`);
+
         context.log(`Http function processed request for url "${request.url}"`);
 
         let payload = await request.json();
@@ -60,16 +156,18 @@ app.http('createJSON', {
             return { status: 400, body: "400 | payload could not be created" }
 
         // check if id exists
-        if (ids.hasOwnProperty(payload.id)) {
-            targetTopic = topic + ids[payload.id]
+        if (ids.hasOwnProperty(id)) {
+
+            if (ids[id].includes("azure_")) {
+                targetDevice = ids[id];
+            } else {
+                targetTopic = topic + ids[id]
+            }
         }
         else {
             targetTopic = null;
-            return { status: 400, body: "400 | Resource does not exist" }
+            return { status: 400, body: "400 | Resource does not exist." }
         }
-
-        // remove id from json payload. Client has no need for it
-        delete payload.id;
 
         // payload primed
         globalPayload = JSON.stringify(payload, null, 2);
@@ -83,8 +181,10 @@ app.http('createJSON', {
 app.http('modifyJSON', {
     methods: ['PUT'],
     authLevel: 'anonymous',
-    route: 'mqtt',
+    route: 'mqtt/{id}',
     handler: async (request, context) => {
+        const id = parseInt(request.params.id, 10);
+
         context.log(`Http function processed request for url "${request.url}"`);
 
         let payload = await request.json();
@@ -92,16 +192,21 @@ app.http('modifyJSON', {
         if (payload === null)
             return { status: 400, body: "400 | payload could not be created" }
 
-        if (ids.hasOwnProperty(payload.id)) {
-            targetTopic = topic + ids[payload.id];
+        // check if id exists
+        if (ids.hasOwnProperty(id)) {
+
+            if (ids[id].includes("azure")) {
+                targetDevice = ids[id];
+            } else {
+                targetTopic = topic + ids[id]
+            }
         }
         else {
             targetTopic = null;
             return { status: 400, body: "400 | Resource does not exist" }
         }
 
-        delete payload.id;
-
+        // payload primed
         globalPayload = JSON.stringify(payload, null, 2);
 
         context.log(`global payload: ${JSON.stringify(globalPayload, null, 2)}`);
