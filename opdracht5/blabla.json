@@ -1,0 +1,10 @@
+{
+    "id" : 1,
+    "enable" : true,
+    "blinkDelayMs" : 500,
+    "rgbValue" : {
+        "red" : 255,
+        "green" : 0,
+        "blue" : 0
+    }
+}

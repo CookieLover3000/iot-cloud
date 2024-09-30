@@ -1,7 +1,7 @@
 const chalk = require('chalk');
 const mqtt = require('mqtt');
 const { stdin: input, stdout: output } = require('node:process');
-const topic = 'mqttIoTHHS/alarmLicht';
+const topic = 'mqttIoTHHS/alarmLicht2';
 const topic2 = 'mqttIoTHHS/all'
 const brokerUrl = 'mqtt://broker.hivemq.com';
 const client = mqtt.connect(brokerUrl);
