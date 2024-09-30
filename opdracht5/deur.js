@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 'use strict';
-require('dotenv').config({ path: './simple_env.env' });
+require('dotenv').config({ path: './opdracht5_env.env' });
 
 var open = false;
 
@@ -18,7 +18,7 @@ let client = null;
 
 function main() {
     // open a connection to the device
-    const deviceConnectionString = process.env.IOTHUB_DEVICE_CONNECTION_STRING;
+    const deviceConnectionString = process.env.IOTHUB_DEUR_CONNECTION_STRING;
     client = Client.fromConnectionString(deviceConnectionString, Protocol);
     // eslint-disable-next-line security/detect-non-literal-fs-filename
     client.open(onConnect);
@@ -105,7 +105,7 @@ function printDeviceMethodRequest(request) {
 
     // if there's a payload just do a default console log on it
     if (request.payload) {
-        console.log('Payload:\n' + request.payload);
+        console.log('Payload:\n' + JSON.stringify(request.payload, null, 2));
     }
 }
 

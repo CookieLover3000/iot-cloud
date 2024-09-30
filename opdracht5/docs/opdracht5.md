@@ -292,7 +292,7 @@ app.http('AzurePublish', {
         methodParams.payload = JSON.parse(globalPayload);
 
         // context.log(`method payload: ${methodParams.payload}`);
-        context.log("type of payload: " + typeof methodParams.payload); // Outputs: object
+        context.log("type of payload: " + typeof methodParams.payload);
 
         var client = Client.fromConnectionString(connectionString);
 
@@ -390,11 +390,9 @@ app.http('mqttPublish', {
 
         if (ids[id].includes("azure")) {
             targetDevice = targetDevice.replace(/^azure_/, '');
-            context.log("azure runt");
             azurePublish(context, request);
         }
         else {
-            context.log("mqtt runt");
             mqttPublish(context, request);
         }
     }

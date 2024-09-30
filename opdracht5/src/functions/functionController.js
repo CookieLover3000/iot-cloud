@@ -28,63 +28,29 @@ var methodParams = {
     responseTimeoutInSeconds: 15 // set response timeout as 15 seconds
 };
 
-// app.http('AzurePublish', {
-//     methods: ['GET'], // not completely sure this is the correct method for this, but I guess we are requesting data
-//     authLevel: 'anonymous',
-//     route: 'mqtt/azure',
-//     handler: async (request, context) => {
-//         context.log(`Http function processed request for url "${request.url}"`);
-
-//         if (globalPayload === null)
-//             return { status: 400, body: "400 | payload is empty" }
-
-//         // context.log(`global payload: ${globalPayload}`);
-
-//         methodParams.payload = JSON.parse(globalPayload);
-
-//         // context.log(`method payload: ${methodParams.payload}`);
-//         context.log("type of payload: " + typeof methodParams.payload); // Outputs: object
-
-//         var client = Client.fromConnectionString(connectionString);
-
-//         client.invokeDeviceMethod(targetDevice, methodParams, function (err, result) {
-//             if (err) {
-//                 console.error('Failed to invoke method \'' + methodParams.methodName + '\': ' + err.message);
-//                 return { status: 500, body: "500 | Failure sending message" }
-//             } else {
-//                 console.log(methodParams.methodName + ' on ' + targetDevice + ':');
-//                 console.log(JSON.stringify(result, null, 2));
-//             }
-//         });
-
-//         client.close();
-//         return { status: 200, body: "200 | OK" }
-//     }
-// });
-
 async function azurePublish(context, request) {
+    var returnMessage = "200 | OK";
     if (globalPayload === null)
-        return { status: 400, body: "400 | payload is empty" }
+        return { status: 400, body: "400 | payload is empty" };
 
     methodParams.payload = JSON.parse(globalPayload);
 
-    // context.log(`method payload: ${methodParams.payload}`);
-    context.log("type of payload: " + typeof methodParams.payload); // Outputs: object
-
     var client = Client.fromConnectionString(connectionString);
 
-    client.invokeDeviceMethod(targetDevice, methodParams, function (err, result) {
-        if (err) {
-            console.error('Failed to invoke method \'' + methodParams.methodName + '\': ' + err.message);
-            return { status: 500, body: "500 | Failure sending message" }
-        } else {
-            console.log(methodParams.methodName + ' on ' + targetDevice + ':');
-            console.log(JSON.stringify(result, null, 2));
-        }
-    });
+    // why does this not work :(
+    try {
+        var result = await client.invokeDeviceMethod(targetDevice, methodParams);
 
-    client.close();
-    return { status: 200, body: "200 | OK" }
+        context.logJSON.stringify(result, null, 2);
+        returnMessage = result.result;
+
+        return { status: 200, body: JSON.stringify(returnMessage) };
+    } catch (err) {
+        context.log(err.message);
+        return { status: 500, body: 'internal server error' };
+    } finally {
+        client.close();
+    }
 }
 
 async function mqttPublish(context, request) {
@@ -116,23 +82,27 @@ function sendMessage(topic, payload) {
     });
 }
 
-app.http('mqttPublish', {
+app.http('messagePublish', {
     methods: ['GET'], // not completely sure this is the correct method for this, but I guess we are requesting data
     authLevel: 'anonymous',
     route: 'mqtt/{id}',
-    
+
     handler: async (request, context) => {
         context.log(`Http function processed request for url "${request.url}"`);
 
         const id = parseInt(request.params.id, 10);
 
         if (ids[id].includes("azure")) {
+            if (id === 4) {
+                methodParams.methodName = 'lockDoor';
+            }
+            else {
+                methodParams.methodName = 'toggleEffect';
+            }
             targetDevice = targetDevice.replace(/^azure_/, '');
-            context.log("azure runt");
             azurePublish(context, request);
         }
         else {
-            context.log("mqtt runt");
             mqttPublish(context, request);
         }
     }
@@ -146,7 +116,7 @@ app.http('createJSON', {
 
         const id = parseInt(request.params.id, 10);
 
-        context.log(`id: ${ids[id]}`);
+        context.log(`[POST] id: ${ids[id]}`);
 
         context.log(`Http function processed request for url "${request.url}"`);
 
