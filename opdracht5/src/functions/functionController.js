@@ -30,6 +30,7 @@ var methodParams = {
 
 async function azurePublish(context, request) {
     var returnMessage = "200 | OK";
+    var result;
     if (globalPayload === null)
         return { status: 400, body: "400 | payload is empty" };
 
@@ -39,17 +40,18 @@ async function azurePublish(context, request) {
 
     // why does this not work :(
     try {
-        var result = await client.invokeDeviceMethod(targetDevice, methodParams);
+        result = await client.invokeDeviceMethod(targetDevice, methodParams);
 
-        context.logJSON.stringify(result, null, 2);
+        context.log("!!!!!!!!!!!!!result!!!!!!!!!!!!! " + JSON.stringify(result, null, 2));
         returnMessage = result.result;
+        // return { status: 200, body: JSON.stringify(returnMessage) };
 
-        return { status: 200, body: JSON.stringify(returnMessage) };
     } catch (err) {
         context.log(err.message);
         return { status: 500, body: 'internal server error' };
     } finally {
-        client.close();
+        await client.close();    
+        return { status: 200, body: returnMessage }
     }
 }
 
@@ -88,6 +90,7 @@ app.http('messagePublish', {
     route: 'mqtt/{id}',
 
     handler: async (request, context) => {
+        var returnValue;
         context.log(`Http function processed request for url "${request.url}"`);
 
         const id = parseInt(request.params.id, 10);
@@ -100,11 +103,21 @@ app.http('messagePublish', {
                 methodParams.methodName = 'toggleEffect';
             }
             targetDevice = targetDevice.replace(/^azure_/, '');
-            azurePublish(context, request);
+            returnValue = await azurePublish(context, request);
+            context.log("return value: !!!!!!!!!!! " + JSON.stringify(returnValue, null, 2));
         }
         else {
-            mqttPublish(context, request);
+            returnValue = await mqttPublish(context, request);
         }
+
+        const { status, body } = returnValue;
+
+        // Return the HTTP response with the correct status and body
+        context.res = {
+            status: status,
+            body: body
+        };
+        return context.res;
     }
 });
 
