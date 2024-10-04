@@ -49,14 +49,14 @@ function onGetDeviceLog(request, response) {
     }
 
     // complete the response
-    response.send(200, responseMessage, function (err) {
-        if (err) {
-            console.error('An error ocurred when sending a method response:\n' +
-                err.toString());
-        } else {
-            console.log(responseMessage);
-        }
-    });
+    // response.send(200, responseMessage, function (err) {
+    //     if (err) {
+    //         console.error('An error ocurred when sending a method response:\n' +
+    //             err.toString());
+    //     } else {
+    //         console.log(responseMessage);
+    //     }
+    // });
 }
 
 function onLockDoor(request, response) {
@@ -66,25 +66,25 @@ function onLockDoor(request, response) {
     if (request["payload"].hasOwnProperty("status")) {
         if (request.payload.status == 'open') {
             if (open) {
-                responseMessage = "door is already open";
+                responseMessage = {message :"door is already open"};
             }
             else {
-                responseMessage = "opening door";
+                responseMessage = {message : "opening door"};
                 open = true;
             }
         }
         else if (request.payload.status == 'close') {
             if (!open) {
-                responseMessage = "door is already closed";
+                responseMessage = {message :"door is already closed"};
             }
             else {
-                responseMessage = "closing door";
+                responseMessage = {message :"closing door"};
                 open = false;
             }
         }
     }
 
-    console.log("response Message: " + responseMessage)
+    console.log("response Message: " + JSON.stringify(responseMessage))
 
 
     // complete the response

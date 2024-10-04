@@ -453,4 +453,76 @@ app.http('createJSON', {
 
 11. Optioneel
 
-12.	In een eerder practicum heb je een Iot Hub deur gemaakt. Deze geeft ook aan of hij al open stond enz.  Maak een nu een function om deze te openen en te sluiten waarbij in de http response in JSON de melding staat of hij al open stond in enz. Dus de terugmelding vanuit het Iot device ontvangt de aanroeper van de REST api ook. NB: Let op het correct gebruik van await.
+12.	In een eerder practicum heb je een Iot Hub deur gemaakt. Deze geeft ook aan of hij al open stond enz. Maak een nu een function om deze te openen en te sluiten waarbij in de http response in JSON de melding staat of hij al open stond in enz. Dus de terugmelding vanuit het Iot device ontvangt de aanroeper van de REST api ook. NB: Let op het correct gebruik van await.
+
+```js
+const { app } = require('@azure/functions');
+
+require('dotenv').config({ path: './opdracht5_env.env' });
+
+var Client = require('azure-iothub').Client;
+var connectionString = process.env.IOTHUB_CONNECTION_STRING;
+var targetDevice = 'deur';
+
+var methodParams = {
+    methodName: "lockDoor",
+    payload: null,
+    responseTimeoutInSeconds: 15 // set response timeout as 15 seconds
+};
+
+
+app.http('messageDeur', {
+    methods: ['GET'], // not completely sure this is the correct method for this, but I guess we are requesting data
+    authLevel: 'anonymous',
+    route: 'deur',
+
+    handler: async (request, context) => {
+        context.log(`Http function processed request for url "${request.url}"`);
+
+        var client = Client.fromConnectionString(connectionString);
+        context.log("Connected to client");
+        var result;
+        try {
+            result = await client.invokeDeviceMethod(targetDevice, methodParams);
+            console.log(result.result);
+
+            context.log(JSON.stringify(result.result));
+            client.close();
+            return {
+                status: 200,
+                body: JSON.stringify(result.result)
+            }
+        } catch (err) {
+            context.log(err.message);
+            return { status: 500, body: 'internal server error' };
+        }
+    }
+});
+
+app.http('createDeurMessage', {
+    methods: ['POST'],
+    authLevel: 'anonymous',
+    route: 'deur',
+    handler: async (request, context) => {
+
+
+        context.log(`Http function processed request for url "${request.url}"`);
+
+        let payload = await request.json();
+        context.log(`Payload: ${JSON.stringify(payload, null, 2)}`);
+        if (payload === null)
+            return { status: 400, body: "400 | payload could not be created" }
+
+        // payload primed
+        methodParams.payload = payload;
+
+        return { status: 200, body: "200 | OK" }
+    }
+});
+```
+
+![alt text](image-23.png)
+
+![alt text](image-24.png)
+
+![alt text](image-25.png)
