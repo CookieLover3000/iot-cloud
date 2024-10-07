@@ -23,9 +23,8 @@ app.http('messageDeur', {
 
         var client = Client.fromConnectionString(connectionString);
         context.log("Connected to client");
-        var result;
         try {
-            result = await client.invokeDeviceMethod(targetDevice, methodParams);
+            var result = await client.invokeDeviceMethod(targetDevice, methodParams);
             console.log(result.result);
 
             context.log(JSON.stringify(result.result));
