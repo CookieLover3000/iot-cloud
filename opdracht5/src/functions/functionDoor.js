@@ -13,32 +13,26 @@ var methodParams = {
 };
 
 
-app.http('messageDeur', {
-    methods: ['GET'], // not completely sure this is the correct method for this, but I guess we are requesting data
-    authLevel: 'anonymous',
-    route: 'deur',
+async function messageDeur(request, context) {
+    context.log(`Http function processed request for url "${request.url}"`);
 
-    handler: async (request, context) => {
-        context.log(`Http function processed request for url "${request.url}"`);
+    var client = Client.fromConnectionString(connectionString);
+    context.log("Connected to client");
+    try {
+        var result = await client.invokeDeviceMethod(targetDevice, methodParams);
+        console.log(result.result);
 
-        var client = Client.fromConnectionString(connectionString);
-        context.log("Connected to client");
-        try {
-            var result = await client.invokeDeviceMethod(targetDevice, methodParams);
-            console.log(result.result);
-
-            context.log(JSON.stringify(result.result));
-            client.close();
-            return {
-                status: 200,
-                body: JSON.stringify(result.result)
-            }
-        } catch (err) {
-            context.log(err.message);
-            return { status: 500, body: 'internal server error' };
+        context.log(JSON.stringify(result.result));
+        client.close();
+        return {
+            status: 200,
+            body: JSON.stringify(result.result)
         }
+    } catch (err) {
+        context.log(err.message);
+        return { status: 500, body: 'internal server error' };
     }
-});
+}
 
 app.http('createDeurMessage', {
     methods: ['POST'],
@@ -57,6 +51,6 @@ app.http('createDeurMessage', {
         // payload primed
         methodParams.payload = payload;
 
-        return { status: 200, body: "200 | OK" }
+        return messageDeur(request, context);
     }
 });

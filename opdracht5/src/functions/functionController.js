@@ -50,7 +50,7 @@ async function azurePublish(context, request) {
         context.log(err.message);
         return { status: 500, body: 'internal server error' };
     } finally {
-        await client.close();    
+        await client.close();
         return { status: 200, body: returnMessage }
     }
 }
@@ -84,42 +84,36 @@ function sendMessage(topic, payload) {
     });
 }
 
-app.http('messagePublish', {
-    methods: ['GET'], // not completely sure this is the correct method for this, but I guess we are requesting data
-    authLevel: 'anonymous',
-    route: 'mqtt/{id}',
+async function messagePublish(request, context) {
+    var returnValue;
+    context.log(`Http function processed request for url "${request.url}"`);
 
-    handler: async (request, context) => {
-        var returnValue;
-        context.log(`Http function processed request for url "${request.url}"`);
+    const id = parseInt(request.params.id, 10);
 
-        const id = parseInt(request.params.id, 10);
-
-        if (ids[id].includes("azure")) {
-            if (id === 4) {
-                methodParams.methodName = 'lockDoor';
-            }
-            else {
-                methodParams.methodName = 'toggleEffect';
-            }
-            targetDevice = targetDevice.replace(/^azure_/, '');
-            returnValue = await azurePublish(context, request);
-            context.log("return value: !!!!!!!!!!! " + JSON.stringify(returnValue, null, 2));
+    if (ids[id].includes("azure")) {
+        if (id === 4) {
+            methodParams.methodName = 'lockDoor';
         }
         else {
-            returnValue = await mqttPublish(context, request);
+            methodParams.methodName = 'toggleEffect';
         }
-
-        const { status, body } = returnValue;
-
-        // Return the HTTP response with the correct status and body
-        context.res = {
-            status: status,
-            body: body
-        };
-        return context.res;
+        targetDevice = targetDevice.replace(/^azure_/, '');
+        returnValue = await azurePublish(context, request);
+        context.log("return value: !!!!!!!!!!! " + JSON.stringify(returnValue, null, 2));
     }
-});
+    else {
+        returnValue = await mqttPublish(context, request);
+    }
+
+    const { status, body } = returnValue;
+
+    // Return the HTTP response with the correct status and body
+    context.res = {
+        status: status,
+        body: body
+    };
+    return context.res;
+}
 
 app.http('createJSON', {
     methods: ['POST'],
@@ -156,6 +150,8 @@ app.http('createJSON', {
         globalPayload = JSON.stringify(payload, null, 2);
 
         context.log(`global payload: ${JSON.stringify(globalPayload, null, 2)}`);
+
+        messagePublish(request, context);
 
         return { status: 200, body: "200 | OK" }
     }
